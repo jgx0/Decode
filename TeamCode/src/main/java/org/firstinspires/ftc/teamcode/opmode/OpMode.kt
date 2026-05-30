@@ -35,7 +35,7 @@ abstract class OpMode : LinearOpMode() {
         onSync = {
             val ms = loopTimer.milliseconds()
             val rawDeltaTime = loopTimer.seconds()
-            val safeDeltaTime = if (rawDeltaTime > 0.0) rawDeltaTime else MIN_DELTA_TIME
+            val safeDeltaTime = if (rawDeltaTime <= 0.0) MIN_DELTA_TIME else rawDeltaTime
             val loopHertz = 1.0 / safeDeltaTime
             deltaTime = safeDeltaTime
             loopTimer.reset()
