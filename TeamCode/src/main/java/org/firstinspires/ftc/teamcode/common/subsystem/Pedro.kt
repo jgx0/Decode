@@ -27,6 +27,7 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
         setStartingPose(startingPose.toPedro())
     }
     var isLocked = false;
+    private var voltageReadFailed = false
 
     val headingController = HeadingLock(this)
 
@@ -48,6 +49,10 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
                     val processedX = processInput(prevX, gp1.current.leftJoyStick.x)
                     val processedY = processInput(prevY, gp1.current.leftJoyStick.y)
                     val voltageReading = runCatching { opMode.voltageSensor.voltage }.getOrNull()
+                    if (voltageReading == null && !voltageReadFailed) {
+                        tel.addData("voltage", "unavailable")
+                        voltageReadFailed = true
+                    }
                     val voltagePowerScale =
                         if (useVoltagePowerLimit && voltageReading != null && voltageReading < lowVoltageThreshold) {
                             lowVoltagePowerScale

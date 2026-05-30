@@ -13,6 +13,10 @@ import org.firstinspires.ftc.teamcode.common.subsystem.SubsystemManager
 import kotlin.system.measureTimeMillis
 
 abstract class OpMode : LinearOpMode() {
+    private companion object {
+        const val MIN_DELTA_TIME = 1e-6
+    }
+
     val tel = PanelsTelemetry.telemetry
 
     lateinit var gamepadManager: GamepadManager
@@ -31,7 +35,7 @@ abstract class OpMode : LinearOpMode() {
         onSync = {
             val ms = loopTimer.milliseconds()
             val rawDeltaTime = loopTimer.seconds()
-            val safeDeltaTime = if (rawDeltaTime > 0.0) rawDeltaTime else 1e-6
+            val safeDeltaTime = if (rawDeltaTime > 0.0) rawDeltaTime else MIN_DELTA_TIME
             val loopHertz = 1.0 / safeDeltaTime
             deltaTime = safeDeltaTime
             loopTimer.reset()
