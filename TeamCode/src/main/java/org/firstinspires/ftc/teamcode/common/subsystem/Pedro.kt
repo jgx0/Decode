@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.opmode.OpMode
 import org.firstinspires.ftc.teamcode.pedro.Constants
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sign
 
@@ -26,6 +27,7 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
         setStartingPose(startingPose.toPedro())
     }
     var isLocked = false;
+    private var voltageReadFailed = false
 
     val headingController = HeadingLock(this)
 
@@ -46,18 +48,32 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
                     // axis snapping
                     val processedX = processInput(prevX, gp1.current.leftJoyStick.x)
                     val processedY = processInput(prevY, gp1.current.leftJoyStick.y)
+                    val voltageReading = runCatching { opMode.voltageSensor.voltage }.getOrNull()
+                    if (voltageReading == null && !voltageReadFailed) {
+                        tel.addData("voltage", "unavailable")
+                        voltageReadFailed = true
+                    }
+                    val voltagePowerScale =
+                        if (useVoltagePowerLimit && voltageReading != null && voltageReading < lowVoltageThreshold) {
+                            lowVoltagePowerScale
+                        } else {
+                            1.0
+                        }
+                    val combinedPowerScale = min(drivePowerLimit, voltagePowerScale)
+                    val scaledX = processedX * combinedPowerScale
+                    val scaledY = processedY * combinedPowerScale
                     if (!useAbsoluteHeading || gp1.current.rightJoyStick.vector.magnitude() < 0.2) {
                         val rx = gp1.current.rightJoyStick.x
                         follower.setTeleOpDrive(
-                            -processedY,
-                            -processedX,
+                            -scaledY,
+                            -scaledX,
                             abs(rx).pow(turningCurve).coerceIn(kS, 1.0) * sign(-rx) * turnScaling
                         )
                     } else {
                         val targetHeading = atan2(-gp1.current.rightJoyStick.y, gp1.current.rightJoyStick.x).toDegrees()
                         headingController.targetHeading = targetHeading
                         follower.setTeleOpDrive(
-                            -processedY, -processedX, headingController.calc()
+                            -scaledY, -scaledX, headingController.calc()
                         )
                         tel.addData("target heading", targetHeading)
                     }
@@ -108,6 +124,18 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
 
         @JvmField
         var turningCurve = 1.5
+
+        @JvmField
+        var drivePowerLimit = 0.8
+
+        @JvmField
+        var useVoltagePowerLimit = true
+
+        @JvmField
+        var lowVoltageThreshold = 11.0
+
+        @JvmField
+        var lowVoltagePowerScale = 0.7
 
         @JvmField
         var useAbsoluteHeading = false
