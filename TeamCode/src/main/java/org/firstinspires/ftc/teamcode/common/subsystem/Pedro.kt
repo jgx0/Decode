@@ -46,18 +46,26 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
                     // axis snapping
                     val processedX = processInput(prevX, gp1.current.leftJoyStick.x)
                     val processedY = processInput(prevY, gp1.current.leftJoyStick.y)
+                    val voltageScale = if (useVoltagePowerLimit && opMode.voltageSensor.voltage < lowVoltageThreshold) {
+                        lowVoltagePowerScale
+                    } else {
+                        1.0
+                    }
+                    val driveScale = drivePowerLimit * voltageScale
+                    val scaledX = processedX * driveScale
+                    val scaledY = processedY * driveScale
                     if (!useAbsoluteHeading || gp1.current.rightJoyStick.vector.magnitude() < 0.2) {
                         val rx = gp1.current.rightJoyStick.x
                         follower.setTeleOpDrive(
-                            -processedY,
-                            -processedX,
+                            -scaledY,
+                            -scaledX,
                             abs(rx).pow(turningCurve).coerceIn(kS, 1.0) * sign(-rx) * turnScaling
                         )
                     } else {
                         val targetHeading = atan2(-gp1.current.rightJoyStick.y, gp1.current.rightJoyStick.x).toDegrees()
                         headingController.targetHeading = targetHeading
                         follower.setTeleOpDrive(
-                            -processedY, -processedX, headingController.calc()
+                            -scaledY, -scaledX, headingController.calc()
                         )
                         tel.addData("target heading", targetHeading)
                     }
@@ -108,6 +116,18 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
 
         @JvmField
         var turningCurve = 1.5
+
+        @JvmField
+        var drivePowerLimit = 0.8
+
+        @JvmField
+        var useVoltagePowerLimit = true
+
+        @JvmField
+        var lowVoltageThreshold = 11.0
+
+        @JvmField
+        var lowVoltagePowerScale = 0.7
 
         @JvmField
         var useAbsoluteHeading = false
