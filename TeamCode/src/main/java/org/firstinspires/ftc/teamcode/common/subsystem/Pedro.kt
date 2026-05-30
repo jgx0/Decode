@@ -46,14 +46,14 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
                     // axis snapping
                     val processedX = processInput(prevX, gp1.current.leftJoyStick.x)
                     val processedY = processInput(prevY, gp1.current.leftJoyStick.y)
-                    val voltageScale = if (useVoltagePowerLimit && opMode.voltageSensor.voltage < lowVoltageThreshold) {
+                    val voltagePowerScale = if (useVoltagePowerLimit && opMode.voltageSensor.voltage < lowVoltageThreshold) {
                         lowVoltagePowerScale
                     } else {
                         1.0
                     }
-                    val driveScale = drivePowerLimit * voltageScale
-                    val scaledX = processedX * driveScale
-                    val scaledY = processedY * driveScale
+                    val combinedPowerScale = drivePowerLimit * voltagePowerScale
+                    val scaledX = processedX * combinedPowerScale
+                    val scaledY = processedY * combinedPowerScale
                     if (!useAbsoluteHeading || gp1.current.rightJoyStick.vector.magnitude() < 0.2) {
                         val rx = gp1.current.rightJoyStick.x
                         follower.setTeleOpDrive(
