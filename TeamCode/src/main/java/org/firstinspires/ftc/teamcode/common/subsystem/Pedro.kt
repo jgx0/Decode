@@ -16,6 +16,7 @@ import org.firstinspires.ftc.teamcode.opmode.OpMode
 import org.firstinspires.ftc.teamcode.pedro.Constants
 import kotlin.math.abs
 import kotlin.math.atan2
+import kotlin.math.min
 import kotlin.math.pow
 import kotlin.math.sign
 
@@ -53,7 +54,7 @@ class Pedro(val opMode: OpMode, val startingPose: Pose2d = Pose2d(), var isTeleo
                         } else {
                             1.0
                         }
-                    val combinedPowerScale = drivePowerLimit * voltagePowerScale
+                    val combinedPowerScale = min(drivePowerLimit, voltagePowerScale)
                     val scaledX = processedX * combinedPowerScale
                     val scaledY = processedY * combinedPowerScale
                     if (!useAbsoluteHeading || gp1.current.rightJoyStick.vector.magnitude() < 0.2) {
