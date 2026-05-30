@@ -30,8 +30,10 @@ abstract class OpMode : LinearOpMode() {
     val scheduler = CommandScheduler().apply {
         onSync = {
             val ms = loopTimer.milliseconds()
-            val loopHertz = 1.0 / loopTimer.seconds()
-            deltaTime = loopHertz
+            val rawDeltaTime = loopTimer.seconds()
+            val safeDeltaTime = if (rawDeltaTime > 0.0) rawDeltaTime else 1e-6
+            val loopHertz = 1.0 / safeDeltaTime
+            deltaTime = safeDeltaTime
             loopTimer.reset()
 
             tel.addData("hz", loopHertz)
